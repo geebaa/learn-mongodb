@@ -1,0 +1,61 @@
+
+Configuring replicas for 1 Primary + 2 Secondary
+-------------------------------------------------
+
+start mongod -replSet repset1 -logpath \data\rs1\1.log --dbpath \data\rs1 --port 27018
+
+start mongod -replSet repset1 -logpath \data\rs2\2.log --dbpath \data\rs2 --port 27019
+
+start mongod -replSet repset1 -logpath \data\rs3\3.log --dbpath \data\rs3 --port 27020
+
+
+mongo --port 27018  <---- this is going to be the configured Primary
+
+
+config = {_id : "repset1" , 
+members :[
+{_id:0,
+ host:"localhost:27018"
+},
+{_id:1,
+ host:"localhost:27018"
+},
+{_id:2,
+ host:"localhost:27018"
+}
+]
+};   <---- set a variable config to the object describing the replica set
+
+rs.initiate(config) <--- apply the config variable
+sr.status() <----- check the status of the current mongod instance at port 27018. it should be primary 
+
+====whereever the above command is run is the "PRIMARY" in the replicaset
+
+====lets create db and  collection 
+
+use db1
+db.createCollection("students");
+==== insert a student document like {name:"ram",num:"10",class:"8"}
+db.students.insert({....})
+db.students.find()
+
+=====goto secondary check for replication of the above db and collection
+mongo --port 27019
+rs.secondaryOk(); <---- have to execute in all secondary
+show dbs <--- check db1 created in primary is replicated
+use db1
+show collectins
+db.students.find()
+
+=====try shutting primary
+use admin
+db.shutdownServer();
+
+==== this will automatically bring up one of the other mongod instance as PRIMARY
+==== go to the mongo shell for the other db's and check the status
+
+
+
+
+
+
